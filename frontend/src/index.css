@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Instrument Serif", serif;
+  --font-body: "Space Grotesk", sans-serif;
+
+  --color-batter: #FAF3E7;
+  --color-batter-2: #F1E4CE;
+  --color-wine: #5B2333;
+  --color-wine-dark: #3E1725;
+  --color-caramel: #E8A33D;
+  --color-caramel-light: #F3C878;
+  --color-raspberry: #C6486B;
+  --color-ink: #2B1810;
+}
+
+body {
+  background-color: var(--color-batter);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* Fold divider - signature element referencing folded crepe triangles */
+.fold-divider {
+  position: relative;
+  height: 28px;
+  width: 100%;
+  overflow: hidden;
+}
+.fold-divider svg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+::selection {
+  background: var(--color-caramel);
+  color: var(--color-wine-dark);
+}
+
+*:focus-visible {
+  outline: 2px solid var(--color-raspberry);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
