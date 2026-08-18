@@ -2,7 +2,7 @@ require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const jwt = require('jsonwebtoken')
-const db = require('./db')
+const { sql, initDb } = require('./db')
 
 const app = express()
 app.use(cors())
@@ -34,7 +34,7 @@ app.post('/api/admin/login', (req, res) => {
 })
 
 // --- Create order (public) ---
-app.post('/api/orders', (req, res) => {
+app.post('/api/orders', async (req, res) => {
   const { customerName, phone, fulfillmentType, address, paymentMethod, notes, items, total } = req.body
 
   if (!customerName || !phone || !fulfillmentType || !paymentMethod || !items || !Array.isArray(items) || items.length === 0) {
@@ -44,44 +44,51 @@ app.post('/api/orders', (req, res) => {
     return res.status(400).json({ error: 'Endereço obrigatório para entrega.' })
   }
 
-  const stmt = db.prepare(`
-    INSERT INTO orders (customerName, phone, fulfillmentType, address, paymentMethod, notes, items, total, status, createdAt)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'recebido', ?)
-  `)
-  const info = stmt.run(
-    customerName,
-    phone,
-    fulfillmentType,
-    address || null,
-    paymentMethod,
-    notes || null,
-    JSON.stringify(items),
-    total,
-    new Date().toISOString()
-  )
-  res.status(201).json({ id: info.lastInsertRowid })
+  try {
+    const rows = await sql`
+      INSERT INTO orders ("customerName", phone, "fulfillmentType", address, "paymentMethod", notes, items, total)
+      VALUES (${customerName}, ${phone}, ${fulfillmentType}, ${address || null}, ${paymentMethod}, ${notes || null}, ${JSON.stringify(items)}, ${total})
+      RETURNING id
+    `
+    res.status(201).json({ id: rows[0].id })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Erro ao salvar o pedido.' })
+  }
 })
 
 // --- List orders (admin only) ---
-app.get('/api/orders', authMiddleware, (req, res) => {
-  const rows = db.prepare('SELECT * FROM orders ORDER BY id DESC').all()
-  const orders = rows.map((r) => ({ ...r, items: JSON.parse(r.items) }))
-  res.json(orders)
+app.get('/api/orders', authMiddleware, async (req, res) => {
+  try {
+    const rows = await sql`SELECT * FROM orders ORDER BY id DESC`
+    res.json(rows)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Erro ao buscar pedidos.' })
+  }
 })
 
 // --- Update order status (admin only) ---
-app.patch('/api/orders/:id', authMiddleware, (req, res) => {
+app.patch('/api/orders/:id', authMiddleware, async (req, res) => {
   const { status } = req.body
   const allowed = ['recebido', 'preparando', 'pronto', 'entregue', 'cancelado']
   if (!allowed.includes(status)) {
     return res.status(400).json({ error: 'Status inválido.' })
   }
-  const result = db.prepare('UPDATE orders SET status = ? WHERE id = ?').run(status, req.params.id)
-  if (result.changes === 0) return res.status(404).json({ error: 'Pedido não encontrado.' })
-  res.json({ ok: true })
+  try {
+    const rows = await sql`UPDATE orders SET status = ${status} WHERE id = ${req.params.id} RETURNING id`
+    if (rows.length === 0) return res.status(404).json({ error: 'Pedido não encontrado.' })
+    res.json({ ok: true })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Erro ao atualizar pedido.' })
+  }
 })
 
 app.get('/api/health', (req, res) => res.json({ ok: true }))
 
 const PORT = process.env.PORT || 4000
-app.listen(PORT, () => console.log(`Crepe Cone Royale API rodando na porta ${PORT}`))
+
+initDb()
+  .then(() => app.listen(PORT, () => console.log(`Crepe Cone Royale API rodando na porta ${PORT}`)))
+  .catch((err) => { console.error('Erro ao iniciar banco:', err); process.exit(1) })
