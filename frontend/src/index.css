@@ -1,56 +1,60 @@
 @import "tailwindcss";
 
 @theme {
-  --font-display: "Instrument Serif", serif;
-  --font-body: "Space Grotesk", sans-serif;
+  --font-display: "Bebas Neue", "Impact", sans-serif;
+  --font-body: "Inter", "Arial", sans-serif;
 
-  --color-batter: #FAF3E7;
-  --color-batter-2: #F1E4CE;
-  --color-wine: #5B2333;
-  --color-wine-dark: #3E1725;
-  --color-caramel: #E8A33D;
-  --color-caramel-light: #F3C878;
-  --color-raspberry: #C6486B;
-  --color-ink: #2B1810;
+  --color-black:   #0A0A0A;
+  --color-charcoal: #1A1A1A;
+  --color-gold:    #F5C518;
+  --color-gold-light: #FFD94D;
+  --color-orange:  #E8720C;
+  --color-orange-light: #FF8C2A;
+  --color-cream:   #FFF8E7;
+  --color-red:     #C0392B;
+  --color-gray:    #888888;
 }
 
 body {
-  background-color: var(--color-batter);
-  color: var(--color-ink);
+  background-color: var(--color-black);
+  color: var(--color-cream);
   font-family: var(--font-body);
 }
 
 .font-display {
   font-family: var(--font-display);
+  letter-spacing: 0.02em;
 }
 
-/* Fold divider - signature element referencing folded crepe triangles */
-.fold-divider {
-  position: relative;
-  height: 28px;
-  width: 100%;
-  overflow: hidden;
+/* Crown shimmer on gold text */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
 }
-.fold-divider svg {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-}
-
-::selection {
-  background: var(--color-caramel);
-  color: var(--color-wine-dark);
+.gold-shimmer {
+  background: linear-gradient(90deg, #F5C518 0%, #FFD94D 40%, #E8720C 60%, #F5C518 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 3s linear infinite;
 }
 
-*:focus-visible {
-  outline: 2px solid var(--color-raspberry);
-  outline-offset: 2px;
+/* Category pill active */
+.cat-active {
+  background: linear-gradient(135deg, #F5C518, #E8720C);
+  color: #0A0A0A;
 }
+
+/* Status step */
+.step-done   { border-color: #F5C518; background: #F5C518; color: #0A0A0A; }
+.step-active { border-color: #E8720C; background: #E8720C; color: #0A0A0A; }
+.step-wait   { border-color: #333;    background: transparent; color: #666; }
+
+::selection { background: #F5C518; color: #0A0A0A; }
+
+*:focus-visible { outline: 2px solid #F5C518; outline-offset: 2px; }
 
 @media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
-  }
+  .gold-shimmer { animation: none; }
 }

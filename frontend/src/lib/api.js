@@ -13,6 +13,12 @@ export async function createOrder(order) {
   return res.json()
 }
 
+export async function getOrderStatus(id) {
+  const res = await fetch(`${API_BASE}/orders/${id}/status`)
+  if (!res.ok) throw new Error('Pedido não encontrado.')
+  return res.json()
+}
+
 export async function adminLogin(password) {
   const res = await fetch(`${API_BASE}/admin/login`, {
     method: 'POST',

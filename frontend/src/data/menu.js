@@ -1,20 +1,28 @@
 export const CATEGORIES = [
-  { id: 'salgados', label: 'Salgados' },
-  { id: 'doces', label: 'Doces' },
-  { id: 'bebidas', label: 'Bebidas' },
+  { id: 'tradicionais', label: 'Tradicionais' },
+  { id: 'especiais',    label: 'Especiais' },
+  { id: 'premium',      label: 'Premium 👑' },
+  { id: 'doces',        label: 'Doces' },
 ]
 
 export const MENU = [
-  { id: 'sal-1', category: 'salgados', name: 'Frango com Catupiry', description: 'Frango desfiado temperado, catupiry cremoso e orégano.', price: 22.9 },
-  { id: 'sal-2', category: 'salgados', name: 'Presunto e Queijo', description: 'Presunto fatiado e queijo muçarela derretido na chapa.', price: 19.9 },
-  { id: 'sal-3', category: 'salgados', name: 'Carne Louca', description: 'Carne bovina desfiada refogada, cebola e pimentão.', price: 23.9 },
-  { id: 'sal-4', category: 'salgados', name: 'Calabresa Acebolada', description: 'Calabresa fatiada, cebola caramelizada e queijo.', price: 21.9 },
-  { id: 'sal-5', category: 'salgados', name: 'Vegetariano da Casa', description: 'Palmito, milho, ervilha, tomate e queijo minas.', price: 20.9 },
-  { id: 'doc-1', category: 'doces', name: 'Nutella com Morango', description: 'Recheio generoso de Nutella e morangos frescos fatiados.', price: 24.9 },
-  { id: 'doc-2', category: 'doces', name: 'Doce de Leite com Coco', description: 'Doce de leite artesanal e coco queimado na chapa.', price: 21.9 },
-  { id: 'doc-3', category: 'doces', name: 'Banana com Canela', description: 'Banana caramelizada, canela e um fio de leite condensado.', price: 19.9 },
-  { id: 'doc-4', category: 'doces', name: 'Romeu e Julieta', description: 'Goiabada derretida e queijo minas.', price: 20.9 },
-  { id: 'beb-1', category: 'bebidas', name: 'Suco de Laranja 500ml', description: 'Suco natural feito na hora.', price: 9.9 },
-  { id: 'beb-2', category: 'bebidas', name: 'Refrigerante Lata', description: 'Coca-Cola, Guaraná ou Fanta.', price: 6.5 },
-  { id: 'beb-3', category: 'bebidas', name: 'Água Mineral 500ml', description: 'Com ou sem gás.', price: 4.5 },
+  // TRADICIONAIS — R$19,50
+  { id: 'trad-1', category: 'tradicionais', name: 'Cone Italiano',  description: 'Queijo mussarela, presunto, tomate e orégano.', price: 19.50 },
+  { id: 'trad-2', category: 'tradicionais', name: 'Cone de Palmito', description: 'Queijo mussarela, palmito e ervas finas.', price: 19.50 },
+  { id: 'trad-3', category: 'tradicionais', name: 'Cone Calabresa',  description: 'Queijo mussarela, tomate e calabresa.', price: 19.50 },
+
+  // ESPECIAIS
+  { id: 'esp-1', category: 'especiais', name: 'Queijo Premium',   description: 'Queijo mussarela, parmessão, provolone e catupiry.', price: 29.99 },
+  { id: 'esp-2', category: 'especiais', name: 'Frango Cremoso',   description: 'Frango desfiado, catupiry e milho.', price: 28.99 },
+
+  // CONE ROYALE PREMIUM
+  { id: 'prem-1', category: 'premium', name: 'Costela BBQ',         description: 'Costela desfiada, cheddar, molho barbecue e cebola crispy.', price: 35.99 },
+  { id: 'prem-2', category: 'premium', name: 'Cone Bacon Royale',   description: 'Bacon crocante, cheddar e mussarela.', price: 34.99 },
+  { id: 'prem-3', category: 'premium', name: 'Cone Camarão Cremoso', description: 'Catupiry, queijo mussarela, camarão e alho poró.', price: 35.99 },
+
+  // DOCES
+  { id: 'doc-1', category: 'doces', name: 'Cone Sensação',          description: 'Chocolate, morango e queijo mussarela.', price: 29.99 },
+  { id: 'doc-2', category: 'doces', name: 'Cone Banana Caramelizada', description: 'Banana, açúcar e canela.', price: 27.00 },
+  { id: 'doc-3', category: 'doces', name: 'Cone Paris Sweet',        description: 'Morango, chocolate, leite condensado e castanha.', price: 34.99 },
+  { id: 'doc-4', category: 'doces', name: 'Cone Banana Flambée',     description: 'Banana caramelizada, doce de leite e canela.', price: 32.99 },
 ]

@@ -26,9 +26,7 @@ function authMiddleware(req, res, next) {
 // --- Admin auth ---
 app.post('/api/admin/login', (req, res) => {
   const { password } = req.body
-  if (password !== ADMIN_PASSWORD) {
-    return res.status(401).json({ error: 'Senha incorreta.' })
-  }
+  if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: 'Senha incorreta.' })
   const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '12h' })
   res.json({ token })
 })
@@ -36,14 +34,10 @@ app.post('/api/admin/login', (req, res) => {
 // --- Create order (public) ---
 app.post('/api/orders', async (req, res) => {
   const { customerName, phone, fulfillmentType, address, paymentMethod, notes, items, total } = req.body
-
-  if (!customerName || !phone || !fulfillmentType || !paymentMethod || !items || !Array.isArray(items) || items.length === 0) {
+  if (!customerName || !phone || !fulfillmentType || !paymentMethod || !items || !Array.isArray(items) || items.length === 0)
     return res.status(400).json({ error: 'Dados do pedido incompletos.' })
-  }
-  if (fulfillmentType === 'entrega' && !address) {
+  if (fulfillmentType === 'entrega' && !address)
     return res.status(400).json({ error: 'Endereço obrigatório para entrega.' })
-  }
-
   try {
     const rows = await sql`
       INSERT INTO orders ("customerName", phone, "fulfillmentType", address, "paymentMethod", notes, items, total)
@@ -57,7 +51,19 @@ app.post('/api/orders', async (req, res) => {
   }
 })
 
-// --- List orders (admin only) ---
+// --- Public: get order status (for customer tracking) ---
+app.get('/api/orders/:id/status', async (req, res) => {
+  try {
+    const rows = await sql`SELECT id, status, "customerName", "fulfillmentType", "createdAt" FROM orders WHERE id = ${req.params.id}`
+    if (rows.length === 0) return res.status(404).json({ error: 'Pedido não encontrado.' })
+    res.json(rows[0])
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Erro ao buscar pedido.' })
+  }
+})
+
+// --- List all orders (admin only) ---
 app.get('/api/orders', authMiddleware, async (req, res) => {
   try {
     const rows = await sql`SELECT * FROM orders ORDER BY id DESC`
@@ -72,9 +78,7 @@ app.get('/api/orders', authMiddleware, async (req, res) => {
 app.patch('/api/orders/:id', authMiddleware, async (req, res) => {
   const { status } = req.body
   const allowed = ['recebido', 'preparando', 'pronto', 'entregue', 'cancelado']
-  if (!allowed.includes(status)) {
-    return res.status(400).json({ error: 'Status inválido.' })
-  }
+  if (!allowed.includes(status)) return res.status(400).json({ error: 'Status inválido.' })
   try {
     const rows = await sql`UPDATE orders SET status = ${status} WHERE id = ${req.params.id} RETURNING id`
     if (rows.length === 0) return res.status(404).json({ error: 'Pedido não encontrado.' })
@@ -88,7 +92,6 @@ app.patch('/api/orders/:id', authMiddleware, async (req, res) => {
 app.get('/api/health', (req, res) => res.json({ ok: true }))
 
 const PORT = process.env.PORT || 4000
-
 initDb()
-  .then(() => app.listen(PORT, () => console.log(`Crepe Cone Royale API rodando na porta ${PORT}`)))
+  .then(() => app.listen(PORT, () => console.log(`Cone Royale API rodando na porta ${PORT}`)))
   .catch((err) => { console.error('Erro ao iniciar banco:', err); process.exit(1) })

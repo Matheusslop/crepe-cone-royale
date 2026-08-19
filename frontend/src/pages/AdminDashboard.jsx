@@ -7,21 +7,16 @@ const fmt = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', curren
 const fmtDate = (iso) => new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
 
 const STATUS_FLOW = ['recebido', 'preparando', 'pronto', 'entregue']
-const STATUS_LABEL = {
-  recebido: 'Recebido',
-  preparando: 'Preparando',
-  pronto: 'Pronto',
-  entregue: 'Entregue',
-  cancelado: 'Cancelado',
-}
+const STATUS_LABEL = { recebido: 'Recebido', preparando: 'Preparando', pronto: 'Pronto', entregue: 'Entregue', cancelado: 'Cancelado' }
 const STATUS_COLOR = {
-  recebido: 'bg-caramel/30 text-wine-dark',
-  preparando: 'bg-caramel text-wine-dark',
-  pronto: 'bg-raspberry/80 text-white',
-  entregue: 'bg-wine text-batter',
-  cancelado: 'bg-ink/20 text-ink/70',
+  recebido:   'bg-gold/20 text-gold border border-gold/40',
+  preparando: 'bg-orange/20 text-orange border border-orange/40',
+  pronto:     'bg-green-600/20 text-green-400 border border-green-500/40',
+  entregue:   'bg-cream/10 text-cream border border-cream/20',
+  cancelado:  'bg-red/10 text-red border border-red/30',
 }
-const PAYMENT_LABEL = { pix: 'Pix', cartao: 'Cartão', dinheiro: 'Dinheiro' }
+const PAYMENT_LABEL = { pix: '💠 Pix', cartao: '💳 Cartão', dinheiro: '💵 Dinheiro' }
+const FULFILLMENT_LABEL = { entrega: '🛵 Entrega', retirada: '🏪 Retirada' }
 
 export default function AdminDashboard({ token, onLogout }) {
   const [orders, setOrders] = useState([])
@@ -37,118 +32,100 @@ export default function AdminDashboard({ token, onLogout }) {
       setError('')
     } catch (err) {
       setError(err.message)
-      if (String(err.message).includes('token') || err.status === 401) {
-        onLogout()
-        navigate('/admin')
-      }
-    } finally {
-      setLoading(false)
-    }
+      if (String(err.message).includes('token')) { onLogout(); navigate('/admin') }
+    } finally { setLoading(false) }
   }, [token])
 
   useEffect(() => {
-    if (!token) {
-      navigate('/admin')
-      return
-    }
+    if (!token) { navigate('/admin'); return }
     load()
-    const interval = setInterval(load, 20000)
-    return () => clearInterval(interval)
+    const iv = setInterval(load, 20000)
+    return () => clearInterval(iv)
   }, [token, load, navigate])
 
-  async function handleStatusChange(id, status) {
+  async function handleStatus(id, status) {
     setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)))
-    try {
-      await updateOrderStatus(token, id, status)
-    } catch {
-      load()
-    }
+    try { await updateOrderStatus(token, id, status) } catch { load() }
   }
 
   const filtered = filter === 'todos' ? orders : orders.filter((o) => o.status === filter)
+  const counts = orders.reduce((acc, o) => { acc[o.status] = (acc[o.status] || 0) + 1; return acc }, {})
 
   return (
-    <main className="max-w-4xl mx-auto px-5 py-8">
+    <main className="max-w-4xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="font-display italic text-4xl text-wine">Pedidos</h1>
+        <div>
+          <h1 className="font-display text-4xl text-gold tracking-wide">PEDIDOS</h1>
+          <p className="text-gray text-sm">{orders.length} pedido{orders.length !== 1 ? 's' : ''} · atualiza em 20s</p>
+        </div>
         <div className="flex items-center gap-2">
-          <button onClick={load} className="p-2 rounded-full hover:bg-wine/10 cursor-pointer" aria-label="Atualizar">
-            <RefreshCw size={18} className="text-wine" />
+          <button onClick={load} className="p-2 rounded-full hover:bg-gold/10 cursor-pointer" aria-label="Atualizar">
+            <RefreshCw size={18} className="text-gold" />
           </button>
-          <button
-            onClick={() => { onLogout(); navigate('/admin') }}
-            className="flex items-center gap-1.5 text-sm text-wine/70 hover:text-wine cursor-pointer"
-          >
-            <LogOut size={16} /> Sair
+          <button onClick={() => { onLogout(); navigate('/admin') }} className="flex items-center gap-1.5 text-sm text-gray hover:text-cream cursor-pointer">
+            <LogOut size={15} /> Sair
           </button>
         </div>
       </div>
 
+      {/* Filter tabs */}
       <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
         {['todos', ...STATUS_FLOW, 'cancelado'].map((s) => (
-          <button
-            key={s}
-            onClick={() => setFilter(s)}
-            className={`px-3.5 py-1.5 rounded-full text-sm font-medium whitespace-nowrap cursor-pointer transition-colors ${
-              filter === s ? 'bg-wine text-batter' : 'bg-white/60 text-wine border border-wine/15 hover:bg-wine/10'
-            }`}
-          >
-            {s === 'todos' ? 'Todos' : STATUS_LABEL[s]}
+          <button key={s} onClick={() => setFilter(s)}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap cursor-pointer transition-colors ${
+              filter === s ? 'bg-gold text-black' : 'bg-charcoal text-gray border border-gold/15 hover:border-gold/40'
+            }`}>
+            {s === 'todos' ? `Todos (${orders.length})` : `${STATUS_LABEL[s]} ${counts[s] ? `(${counts[s]})` : ''}`}
           </button>
         ))}
       </div>
 
-      {loading && <p className="text-ink/60">Carregando pedidos...</p>}
-      {error && <p className="text-raspberry">{error}</p>}
-      {!loading && filtered.length === 0 && <p className="text-ink/60">Nenhum pedido nessa categoria.</p>}
+      {loading && <p className="text-gray">Carregando...</p>}
+      {error && <p className="text-red">{error}</p>}
+      {!loading && filtered.length === 0 && <p className="text-gray">Nenhum pedido nessa categoria.</p>}
 
       <div className="space-y-4">
         {filtered.map((order) => (
-          <div key={order.id} className="bg-white/60 border border-wine/10 rounded-2xl p-5">
-            <div className="flex items-start justify-between flex-wrap gap-2">
+          <div key={order.id} className="bg-charcoal border border-gold/10 rounded-2xl p-5 hover:border-gold/25 transition-colors">
+            <div className="flex items-start justify-between flex-wrap gap-2 mb-3">
               <div>
-                <p className="font-semibold text-wine">#{order.id} · {order.customerName}</p>
-                <p className="text-sm text-ink/60">{order.phone} · {fmtDate(order.createdAt)}</p>
+                <p className="font-bold text-cream">#{order.id} · {order.customerName}</p>
+                <p className="text-xs text-gray mt-0.5">{order.phone} · {fmtDate(order.createdAt)}</p>
               </div>
-              <span className={`px-3 py-1 rounded-full text-xs font-medium ${STATUS_COLOR[order.status]}`}>
+              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${STATUS_COLOR[order.status]}`}>
                 {STATUS_LABEL[order.status]}
               </span>
             </div>
 
-            <div className="mt-3 text-sm text-ink/80 space-y-0.5">
+            <div className="text-sm text-gray space-y-0.5 mb-3">
               {order.items.map((item, i) => (
-                <p key={i}>{item.qty}x {item.name}</p>
+                <p key={i} className="text-cream/80">{item.qty}x {item.name}</p>
               ))}
             </div>
 
-            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink/70">
-              <span className="capitalize">{order.fulfillmentType === 'entrega' ? 'Entrega' : 'Retirada'}</span>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray mb-2">
+              <span>{FULFILLMENT_LABEL[order.fulfillmentType]}</span>
               <span>{PAYMENT_LABEL[order.paymentMethod]}</span>
-              <span className="font-semibold text-wine">{fmt(order.total)}</span>
+              <span className="font-bold text-gold text-sm">{fmt(order.total)}</span>
             </div>
-            {order.address && <p className="text-sm text-ink/60 mt-1">{order.address}</p>}
-            {order.notes && <p className="text-sm text-ink/60 mt-1 italic">Obs: {order.notes}</p>}
+            {order.address && <p className="text-xs text-gray mb-1">📍 {order.address}</p>}
+            {order.notes && <p className="text-xs text-orange italic">Obs: {order.notes}</p>}
 
-            <div className="flex flex-wrap gap-2 mt-4">
+            {/* Status action buttons */}
+            <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gold/10">
               {STATUS_FLOW.map((s) => (
-                <button
-                  key={s}
-                  onClick={() => handleStatusChange(order.id, s)}
-                  disabled={order.status === s}
+                <button key={s} onClick={() => handleStatus(order.id, s)} disabled={order.status === s}
                   className={`text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${
                     order.status === s
-                      ? 'bg-wine text-batter border-wine cursor-default'
-                      : 'border-wine/20 text-wine hover:bg-wine/10'
-                  }`}
-                >
+                      ? 'bg-gold text-black border-gold font-semibold'
+                      : 'border-gold/20 text-gray hover:border-gold/50 hover:text-cream'
+                  }`}>
                   {STATUS_LABEL[s]}
                 </button>
               ))}
               {order.status !== 'cancelado' && (
-                <button
-                  onClick={() => handleStatusChange(order.id, 'cancelado')}
-                  className="text-xs px-3 py-1.5 rounded-full border border-raspberry/40 text-raspberry hover:bg-raspberry/10 cursor-pointer"
-                >
+                <button onClick={() => handleStatus(order.id, 'cancelado')}
+                  className="text-xs px-3 py-1.5 rounded-full border border-red/30 text-red hover:bg-red/10 cursor-pointer ml-auto">
                   Cancelar
                 </button>
               )}

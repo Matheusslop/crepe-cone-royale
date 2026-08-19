@@ -24,24 +24,26 @@ export default function AdminLogin({ onLogin }) {
   }
 
   return (
-    <main className="max-w-sm mx-auto px-5 py-24">
-      <h1 className="font-display italic text-4xl text-wine text-center">Área administrativa</h1>
-      <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+    <main className="max-w-sm mx-auto px-5 py-24 text-center">
+      <span className="text-5xl">👑</span>
+      <h1 className="font-display text-4xl text-gold mt-3 tracking-wide">ÁREA ADMIN</h1>
+      <p className="text-gray text-sm mt-1 mb-8">Cone Royale · Gestão de pedidos</p>
+      <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="password"
           placeholder="Senha de acesso"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full px-4 py-3 rounded-xl border border-wine/20 bg-white/60 focus:border-caramel outline-none"
+          className="w-full px-4 py-3 rounded-xl border border-gold/20 bg-black/40 text-cream placeholder:text-gray focus:border-gold outline-none"
           autoFocus
         />
-        {error && <p className="text-raspberry text-sm">{error}</p>}
+        {error && <p className="text-red text-sm">{error}</p>}
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 rounded-full bg-wine text-batter font-medium hover:bg-wine-dark transition-colors disabled:opacity-60 cursor-pointer"
+          className="w-full py-3 rounded-full bg-gold text-black font-bold hover:bg-gold-light transition-colors disabled:opacity-60 cursor-pointer"
         >
-          {loading ? 'Entrando...' : 'Entrar'}
+          {loading ? 'ENTRANDO...' : 'ENTRAR'}
         </button>
       </form>
     </main>
