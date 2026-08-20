@@ -1,3 +1,4 @@
+import logo from '../assets/logo-cone-royale.jpg'
 import { Link } from 'react-router-dom'
 import { ShoppingBag, Search } from 'lucide-react'
 import { useCart } from '../context/CartContext'
@@ -5,6 +6,15 @@ import { useCart } from '../context/CartContext'
 export default function Header({ onOpenCart }) {
   const { count } = useCart()
   return (
+     <header className="sticky top-0 z-40 bg-black/95 backdrop-blur border-b border-gold/10">
+       <div className="max-w-5xl mx-auto px-4 h-16 flex items-center">
+        <img
+          src={logo}
+           alt="Cone Royale"
+            className="h-12 w-auto object-contain"
+           />
+       </div>
+       </header>
     <header className="sticky top-0 z-40 bg-black/95 backdrop-blur border-b border-gold/20">
       <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
         {/* Logo */}
