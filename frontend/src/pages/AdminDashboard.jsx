@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { RefreshCw, LogOut, Trash2 } from 'lucide-react'
-import { fetchOrders, updateOrderStatus, deleteOrder } from '../lib/api'
+import { RefreshCw, LogOut } from 'lucide-react'
+import { fetchOrders, updateOrderStatus } from '../lib/api'
 
 const fmt = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 const fmtDate = (iso) => new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
@@ -42,17 +42,6 @@ export default function AdminDashboard({ token, onLogout }) {
     const iv = setInterval(load, 20000)
     return () => clearInterval(iv)
   }, [token, load, navigate])
-
-  async function handleDelete(id) {
-    if (!window.confirm(`Apagar permanentemente o pedido #${id}? Esta ação não pode ser desfeita.`)) return
-    setOrders((prev) => prev.filter((o) => o.id !== id))
-    try {
-      await deleteOrder(token, id)
-    } catch (err) {
-      alert(err.message)
-      load()
-    }
-  }
 
   async function handleStatus(id, status) {
     setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)))
@@ -138,15 +127,6 @@ export default function AdminDashboard({ token, onLogout }) {
                 <button onClick={() => handleStatus(order.id, 'cancelado')}
                   className="text-xs px-3 py-1.5 rounded-full border border-red/30 text-red hover:bg-red/10 cursor-pointer ml-auto">
                   Cancelar
-                </button>
-              )}
-              {order.status === 'cancelado' && (
-                <button
-                  onClick={() => handleDelete(order.id)}
-                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-red/30 text-red hover:bg-red/20 cursor-pointer ml-auto transition-colors"
-                  title="Apagar pedido cancelado"
-                >
-                  <Trash2 size={13} /> Apagar
                 </button>
               )}
             </div>
