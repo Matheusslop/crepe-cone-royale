@@ -6,15 +6,6 @@ import { useCart } from '../context/CartContext'
 export default function Header({ onOpenCart }) {
   const { count } = useCart()
   return (
-     <header className="sticky top-0 z-40 bg-black/95 backdrop-blur border-b border-gold/10">
-       <div className="max-w-5xl mx-auto px-4 h-16 flex items-center">
-        <img
-          src={logo}
-           alt="Cone Royale"
-            className="h-12 w-auto object-contain"
-           />
-       </div>
-       </header>
     <header className="sticky top-0 z-40 bg-black/95 backdrop-blur border-b border-gold/20">
       <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
         {/* Logo */}
@@ -27,7 +18,14 @@ export default function Header({ onOpenCart }) {
             <span className="font-display text-xl sm:text-2xl text-gold tracking-wide">CONE ROYALE</span>
             <p className="text-[10px] text-orange font-medium tracking-widest uppercase hidden sm:block">Crepes no Cone</p>
           </div>
-        </Link>
+          <div className="max-w-5xl mx-auto px-4 h-16 flex items-center">
+            <img
+          src={logo}
+           alt="Cone Royale"
+            className="h-12 w-auto object-contain"
+             />
+           </div>
+             </Link>
 
         {/* Nav + actions */}
         <div className="flex items-center gap-2">
