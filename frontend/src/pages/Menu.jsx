@@ -1,3 +1,4 @@
+import logo from '../assets/logo-cone-royale.jpg'
 import { useState } from 'react'
 import { CATEGORIES, MENU } from '../data/menu'
 import ProductCard from '../components/ProductCard'
@@ -10,6 +11,17 @@ export default function Menu() {
 
   return (
     <main>
+      
+      <header className="sticky top-0 z-40 bg-black/95 backdrop-blur border-b border-gold/10">
+       <div className="max-w-5xl mx-auto px-4 h-16 flex items-center">
+        <img
+          src={logo}
+           alt="Cone Royale"
+            className="h-12 w-auto object-contain"
+           />
+       </div>
+       </header>
+
       {/* Hero */}
       <section className="relative overflow-hidden bg-charcoal">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(245,197,24,0.12)_0%,_transparent_70%)]" />
