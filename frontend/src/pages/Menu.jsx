@@ -12,15 +12,29 @@ export default function Menu() {
   return (
     <main>
       
-      <header className="sticky top-0 z-40 bg-black/95 backdrop-blur border-b border-gold/10">
-       <div className="max-w-5xl mx-auto px-4 h-16 flex items-center">
-        <img
-          src={logo}
-           alt="Cone Royale"
-            className="h-12 w-auto object-contain"
-           />
-       </div>
-       </header>
+     <header className="sticky top-0 z-40 bg-black/95 backdrop-blur border-b border-gold/10">
+  <div className="max-w-5xl mx-auto px-4 h-16 flex items-center">
+
+    {/* Logo */}
+    <img
+      src={logo}
+      alt="Cone Royale"
+      className="h-11 w-auto object-contain"
+      />
+
+    {/* Nome da loja */}
+    <div className="ml-3 leading-none">
+      <h1 className="font-display text-2xl text-cream tracking-wide">
+        <span className="gold-shimmer">CONE</span> ROYALE
+      </h1>
+
+      <p className="text-orange text-[9px] font-bold tracking-[0.2em] uppercase mt-1">
+        Crepes no Cone
+      </p>
+    </div>
+
+     </div>
+      </header>
 
       {/* Hero */}
       <section className="relative overflow-hidden bg-charcoal">
