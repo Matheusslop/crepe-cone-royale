@@ -74,6 +74,20 @@ app.get('/api/orders', authMiddleware, async (req, res) => {
   }
 })
 
+// --- Delete cancelled order (admin only) ---
+app.delete('/api/orders/:id', authMiddleware, async (req, res) => {
+  try {
+    const check = await sql`SELECT status FROM orders WHERE id = ${req.params.id}`
+    if (check.length === 0) return res.status(404).json({ error: 'Pedido não encontrado.' })
+    if (check[0].status !== 'cancelado') return res.status(400).json({ error: 'Só é possível apagar pedidos cancelados.' })
+    await sql`DELETE FROM orders WHERE id = ${req.params.id}`
+    res.json({ ok: true })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Erro ao apagar pedido.' })
+  }
+})
+
 // --- Update order status (admin only) ---
 app.patch('/api/orders/:id', authMiddleware, async (req, res) => {
   const { status } = req.body
