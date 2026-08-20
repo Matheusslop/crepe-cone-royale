@@ -37,7 +37,7 @@ export default function Menu() {
           <p className="text-gray text-sm mt-2">Toque na imagem para abrir o cardápio em tamanho maior.</p>
         </div>
 
-        <div className="w-full max-w-[100px] mx-auto">
+        <div className="w-full max-w-[200px] mx-auto">
           <button
             type="button"
             onClick={() => setMenuOpen(true)}
@@ -56,7 +56,7 @@ export default function Menu() {
             href="https://wa.me/5561982377059?text=Ol%C3%A1!%20Vi%20o%20card%C3%A1pio%20da%20Cone%20Royale%20e%20quero%20fazer%20um%20pedido."
             target="_blank"
             rel="noreferrer"
-            className="mt-5 flex items-center justify-center rounded-full px-6 py-3 bg-gradient-to-r from-gold to-orange text-black font-bold uppercase tracking-wide shadow-[0_0_18px_rgba(245,197,24,0.25)] hover:scale-[1.01] transition-transform"
+            className="mt-5 w-[300px] mx-auto flex items-center justify-center rounded-full px-6 py-3 bg-gradient-to-r from-gold to-orange text-black font-bold uppercase tracking-wide shadow-[0_0_18px_rgba(245,197,24,0.25)] hover:scale-[1.01] transition-transform"
           >
             Pedir pelo WhatsApp
           </a>
