@@ -19,6 +19,18 @@ export async function getOrderStatus(id) {
   return res.json()
 }
 
+export async function deleteOrder(token, id) {
+  const res = await fetch(`${API_BASE}/orders/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.error || 'Não foi possível apagar o pedido.')
+  }
+  return res.json()
+}
+
 export async function adminLogin(password) {
   const res = await fetch(`${API_BASE}/admin/login`, {
     method: 'POST',
