@@ -37,7 +37,7 @@ export default function Menu() {
           <p className="text-gray text-sm mt-2">Toque na imagem para abrir o cardápio em tamanho maior.</p>
         </div>
 
-        <div className="w-full max-w-[900px] mx-auto">
+        <div className="w-full max-w-[100px] mx-auto">
           <button
             type="button"
             onClick={() => setMenuOpen(true)}
