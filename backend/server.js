@@ -5,7 +5,25 @@ const jwt = require('jsonwebtoken')
 const { sql, initDb } = require('./db')
 
 const app = express()
-app.use(cors())
+const allowedOrigins = [
+  'https://crepe-cone-royale-1.onrender.com',
+  'http://localhost:5173',
+]
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true)
+    } else {
+      callback(new Error('Origem não permitida pelo CORS'))
+    }
+  },
+  methods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}))
+
+app.options('*', cors())
+
 app.use(express.json())
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret'
