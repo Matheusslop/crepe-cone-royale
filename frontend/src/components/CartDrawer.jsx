@@ -33,23 +33,26 @@ export default function CartDrawer({ open, onClose }) {
             <p className="text-gray text-sm">Seu carrinho está vazio. Que tal um Cone Royale Premium? 👑</p>
           )}
           {items.map((item) => (
-            <div key={`${item.id}-${item.notes}`} className="bg-black/40 rounded-xl p-3">
+            <div key={item.lineId} className="bg-black/40 rounded-xl p-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1">
                   <p className="font-semibold text-cream text-sm">{item.name}</p>
+                  {item.extras?.length > 0 && (
+                    <p className="text-xs text-orange mt-0.5">+ {item.extras.map((e) => e.name).join(', ')}</p>
+                  )}
                   {item.notes && <p className="text-xs text-gray mt-0.5">{item.notes}</p>}
                   <p className="text-gold font-bold mt-1">{fmt(item.price)}</p>
                 </div>
-                <button onClick={() => removeItem(item.id, item.notes)} className="text-gray hover:text-red cursor-pointer">
+                <button onClick={() => removeItem(item.lineId)} className="text-gray hover:text-red cursor-pointer">
                   <Trash2 size={15} />
                 </button>
               </div>
               <div className="flex items-center gap-3 mt-2">
-                <button onClick={() => updateQty(item.id, item.notes, item.qty - 1)} className="w-7 h-7 rounded-full border border-gold/30 flex items-center justify-center hover:bg-gold/10 cursor-pointer text-cream">
+                <button onClick={() => updateQty(item.lineId, item.qty - 1)} className="w-7 h-7 rounded-full border border-gold/30 flex items-center justify-center hover:bg-gold/10 cursor-pointer text-cream">
                   <Minus size={13} />
                 </button>
                 <span className="w-4 text-center text-cream font-semibold">{item.qty}</span>
-                <button onClick={() => updateQty(item.id, item.notes, item.qty + 1)} className="w-7 h-7 rounded-full border border-gold/30 flex items-center justify-center hover:bg-gold/10 cursor-pointer text-cream">
+                <button onClick={() => updateQty(item.lineId, item.qty + 1)} className="w-7 h-7 rounded-full border border-gold/30 flex items-center justify-center hover:bg-gold/10 cursor-pointer text-cream">
                   <Plus size={13} />
                 </button>
                 <span className="ml-auto text-sm text-gray">{fmt(item.price * item.qty)}</span>

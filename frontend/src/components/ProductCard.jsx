@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Plus, Check } from 'lucide-react'
 import { useCart } from '../context/CartContext'
+import { EXTRAS, EXTRA_PRICE } from '../data/menu'
 
 const fmt = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
@@ -14,11 +15,23 @@ const CATEGORY_BADGE = {
 export default function ProductCard({ product }) {
   const { addItem } = useCart()
   const [added, setAdded] = useState(false)
+  const [customizing, setCustomizing] = useState(false)
+  const [selected, setSelected] = useState([])
   const badge = CATEGORY_BADGE[product.category] || {}
+  const extrasList = EXTRAS[product.category === 'doces' ? 'doce' : 'salgado']
+  const extrasTotal = selected.reduce((sum, e) => sum + e.price, 0)
+
+  function toggleExtra(extra) {
+    setSelected((prev) =>
+      prev.some((e) => e.id === extra.id) ? prev.filter((e) => e.id !== extra.id) : [...prev, extra]
+    )
+  }
 
   function handleAdd() {
-    addItem(product, 1)
+    addItem(product, 1, '', selected)
     setAdded(true)
+    setCustomizing(false)
+    setSelected([])
     setTimeout(() => setAdded(false), 1400)
   }
 
@@ -45,21 +58,52 @@ export default function ProductCard({ product }) {
           )}
           <h3 className="font-display text-xl text-cream tracking-wide">{product.name}</h3>
           <p className="text-sm text-gray mt-1.5 leading-relaxed">{product.description}</p>
+
+          {customizing && extrasList.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-gold/10 space-y-1.5">
+              <p className="text-[11px] text-gold font-semibold uppercase tracking-wide mb-1">
+                Ingredientes extras (+{fmt(EXTRA_PRICE)} cada)
+              </p>
+              {extrasList.map((extra) => (
+                <label key={extra.id} className="flex items-center gap-2 text-sm text-cream/80 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selected.some((e) => e.id === extra.id)}
+                    onChange={() => toggleExtra(extra)}
+                    className="accent-gold w-4 h-4"
+                  />
+                  {extra.name}
+                </label>
+              ))}
+            </div>
+          )}
         </div>
-        <div className="mt-4 flex items-center justify-between">
-          <span className="font-bold text-xl text-gold">{fmt(product.price)}</span>
-          <button
-            onClick={handleAdd}
-            aria-label={`Adicionar ${product.name}`}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all cursor-pointer ${
-              added
-                ? 'bg-green-600 text-white scale-95'
-                : 'bg-gold text-black hover:bg-gold-light'
-            }`}
-          >
-            {added ? <Check size={15} /> : <Plus size={15} />}
-            {added ? 'Adicionado!' : 'Adicionar'}
-          </button>
+
+        <div className="mt-4">
+          <div className="flex items-center justify-between">
+            <span className="font-bold text-xl text-gold">{fmt(product.price + extrasTotal)}</span>
+            <button
+              onClick={handleAdd}
+              aria-label={`Adicionar ${product.name}`}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all cursor-pointer ${
+                added
+                  ? 'bg-green-600 text-white scale-95'
+                  : 'bg-gold text-black hover:bg-gold-light'
+              }`}
+            >
+              {added ? <Check size={15} /> : <Plus size={15} />}
+              {added ? 'Adicionado!' : 'Adicionar'}
+            </button>
+          </div>
+          {extrasList.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setCustomizing((v) => !v)}
+              className="text-xs text-gray hover:text-gold mt-2 underline decoration-dotted cursor-pointer"
+            >
+              {customizing ? 'Ocultar ingredientes extras' : '+ Adicionar ingredientes (opcional)'}
+            </button>
+          )}
         </div>
       </div>
     </div>

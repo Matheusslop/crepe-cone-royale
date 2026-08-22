@@ -27,7 +27,13 @@ export default function Checkout() {
     }
     setLoading(true)
     try {
-      const order = await createOrder({ customerName: form.name, phone: form.phone, fulfillmentType: fulfillment, address: fulfillment === 'entrega' ? form.address : null, paymentMethod: payment, notes: form.notes, items, total })
+      const orderItems = items.map((i) => ({
+        id: i.id,
+        qty: i.qty,
+        price: i.price,
+        name: i.extras?.length ? `${i.name} (+ ${i.extras.map((e) => e.name).join(', ')})` : i.name,
+      }))
+      const order = await createOrder({ customerName: form.name, phone: form.phone, fulfillmentType: fulfillment, address: fulfillment === 'entrega' ? form.address : null, paymentMethod: payment, notes: form.notes, items: orderItems, total })
       clearCart()
       navigate(`/pedido/${order.id}`)
     } catch (err) {
@@ -97,8 +103,13 @@ export default function Checkout() {
         {/* Resumo */}
         <div className="bg-charcoal border border-gold/20 rounded-2xl p-4 space-y-1.5">
           {items.map((item) => (
-            <div key={`${item.id}-${item.notes}`} className="flex justify-between text-sm text-gray">
-              <span>{item.qty}x {item.name}</span>
+            <div key={item.lineId} className="flex justify-between text-sm text-gray">
+              <span>
+                {item.qty}x {item.name}
+                {item.extras?.length > 0 && (
+                  <span className="text-orange"> (+ {item.extras.map((e) => e.name).join(', ')})</span>
+                )}
+              </span>
               <span>{fmt(item.price * item.qty)}</span>
             </div>
           ))}

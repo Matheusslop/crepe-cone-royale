@@ -5,6 +5,28 @@ export const CATEGORIES = [
   { id: 'doces',        label: 'Doces' },
 ]
 
+// Preço fixo de cada ingrediente extra que o cliente pode adicionar ao pedido.
+export const EXTRA_PRICE = 3
+
+// Ingredientes extras disponíveis, separados por tipo de cone (salgado ou doce).
+export const EXTRAS = {
+  salgado: [
+    { id: 'extra-catupiry', name: 'Catupiry', price: EXTRA_PRICE },
+    { id: 'extra-cheddar', name: 'Cheddar', price: EXTRA_PRICE },
+    { id: 'extra-bacon', name: 'Bacon', price: EXTRA_PRICE },
+    { id: 'extra-calabresa', name: 'Calabresa', price: EXTRA_PRICE },
+    { id: 'extra-cebola-crispy', name: 'Cebola Crispy', price: EXTRA_PRICE },
+    { id: 'extra-milho', name: 'Milho', price: EXTRA_PRICE },
+  ],
+  doce: [
+    { id: 'extra-leite-condensado', name: 'Leite Condensado', price: EXTRA_PRICE },
+    { id: 'extra-granola', name: 'Granola', price: EXTRA_PRICE },
+    { id: 'extra-chocolate', name: 'Chocolate', price: EXTRA_PRICE },
+    { id: 'extra-morango', name: 'Morango', price: EXTRA_PRICE },
+    { id: 'extra-marshmallow', name: 'Marshmallow', price: EXTRA_PRICE },
+  ],
+}
+
 export const MENU = [
   // TRADICIONAIS — R$19,50
   { id: 'trad-1', category: 'tradicionais', name: 'Cone Italiano',  description: 'Queijo mussarela, presunto, tomate e orégano.', price: 19.50 },

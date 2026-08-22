@@ -1,8 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
-import { ImagePlus, X, Loader2 } from 'lucide-react'
+import { ImagePlus, X, Loader2, Pencil, Check, Trash2, Plus } from 'lucide-react'
 import { CATEGORIES } from '../../data/menu'
-import { fetchProducts, uploadProductImage, removeProductImage } from '../../lib/api'
+import {
+  fetchProducts,
+  uploadProductImage,
+  removeProductImage,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+} from '../../lib/api'
 import { fileToCompressedDataUrl } from '../../lib/image'
+
+const fmt = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+
+const emptyForm = { name: '', category: CATEGORIES[0].id, description: '', price: '' }
 
 export default function AdminProducts({ token }) {
   const [products, setProducts] = useState([])
@@ -10,6 +21,14 @@ export default function AdminProducts({ token }) {
   const [error, setError] = useState('')
   const [busyId, setBusyId] = useState(null)
   const fileInputs = useRef({})
+
+  const [editingPriceId, setEditingPriceId] = useState(null)
+  const [priceDraft, setPriceDraft] = useState('')
+
+  const [creating, setCreating] = useState(false)
+  const [form, setForm] = useState(emptyForm)
+  const [formError, setFormError] = useState('')
+  const [savingForm, setSavingForm] = useState(false)
 
   async function load() {
     try {
@@ -24,6 +43,68 @@ export default function AdminProducts({ token }) {
 
   useEffect(() => { load() }, [])
 
+  // --- Novo item ---
+  async function handleCreate(e) {
+    e.preventDefault()
+    setFormError('')
+    const priceNum = Number(form.price.replace(',', '.'))
+    if (!form.name.trim()) { setFormError('Informe o nome do item.'); return }
+    if (!Number.isFinite(priceNum) || priceNum <= 0) { setFormError('Informe um preço válido.'); return }
+
+    setSavingForm(true)
+    try {
+      await createProduct(token, {
+        name: form.name.trim(),
+        category: form.category,
+        description: form.description.trim(),
+        price: priceNum,
+      })
+      setForm(emptyForm)
+      setCreating(false)
+      await load()
+    } catch (err) {
+      setFormError(err.message)
+    } finally {
+      setSavingForm(false)
+    }
+  }
+
+  // --- Editar preço ---
+  function startEditPrice(p) {
+    setEditingPriceId(p.id)
+    setPriceDraft(String(p.price))
+  }
+
+  async function savePrice(id) {
+    const priceNum = Number(String(priceDraft).replace(',', '.'))
+    if (!Number.isFinite(priceNum) || priceNum <= 0) { alert('Informe um preço válido.'); return }
+    setBusyId(id)
+    try {
+      await updateProduct(token, id, { price: priceNum })
+      setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, price: priceNum } : p)))
+      setEditingPriceId(null)
+    } catch (err) {
+      alert(err.message)
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  // --- Remover item ---
+  async function handleDeleteProduct(id, name) {
+    if (!window.confirm(`Remover "${name}" do cardápio? Esta ação não pode ser desfeita.`)) return
+    setBusyId(id)
+    try {
+      await deleteProduct(token, id)
+      setProducts((prev) => prev.filter((p) => p.id !== id))
+    } catch (err) {
+      alert(err.message)
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  // --- Imagem ---
   async function handleFile(id, e) {
     const file = e.target.files?.[0]
     e.target.value = ''
@@ -42,7 +123,7 @@ export default function AdminProducts({ token }) {
     }
   }
 
-  async function handleRemove(id) {
+  async function handleRemoveImage(id) {
     if (!window.confirm('Remover a imagem deste item?')) return
     setBusyId(id)
     try {
@@ -57,10 +138,64 @@ export default function AdminProducts({ token }) {
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-8">
-      <div className="mb-6">
-        <h1 className="font-display text-4xl text-gold tracking-wide">CARDÁPIO</h1>
-        <p className="text-gray text-sm">Envie ou troque a foto de cada item. As imagens são redimensionadas automaticamente.</p>
+      <div className="mb-6 flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="font-display text-4xl text-gold tracking-wide">CARDÁPIO</h1>
+          <p className="text-gray text-sm">Adicione itens, altere preços e troque as fotos.</p>
+        </div>
+        <button
+          onClick={() => { setCreating((v) => !v); setFormError('') }}
+          className="flex items-center gap-1.5 text-xs px-4 py-2 rounded-full bg-gold text-black font-semibold hover:bg-gold-light transition-colors cursor-pointer"
+        >
+          <Plus size={14} /> {creating ? 'Cancelar' : 'Novo item'}
+        </button>
       </div>
+
+      {creating && (
+        <form onSubmit={handleCreate} className="bg-charcoal border border-gold/20 rounded-2xl p-5 mb-8 space-y-3">
+          <div className="grid sm:grid-cols-2 gap-3">
+            <input
+              type="text"
+              placeholder="Nome do item *"
+              value={form.name}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              className="px-4 py-2.5 rounded-xl border border-gold/20 bg-black/40 text-cream placeholder:text-gray focus:border-gold outline-none"
+            />
+            <select
+              value={form.category}
+              onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
+              className="px-4 py-2.5 rounded-xl border border-gold/20 bg-black/40 text-cream focus:border-gold outline-none"
+            >
+              {CATEGORIES.map((c) => (
+                <option key={c.id} value={c.id}>{c.label}</option>
+              ))}
+            </select>
+          </div>
+          <textarea
+            placeholder="Descrição (opcional)"
+            value={form.description}
+            onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+            rows={2}
+            className="w-full px-4 py-2.5 rounded-xl border border-gold/20 bg-black/40 text-cream placeholder:text-gray focus:border-gold outline-none resize-none"
+          />
+          <input
+            type="text"
+            inputMode="decimal"
+            placeholder="Preço (ex: 29,90) *"
+            value={form.price}
+            onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+            className="w-full sm:w-48 px-4 py-2.5 rounded-xl border border-gold/20 bg-black/40 text-cream placeholder:text-gray focus:border-gold outline-none"
+          />
+          {formError && <p className="text-red text-sm">{formError}</p>}
+          <button
+            type="submit"
+            disabled={savingForm}
+            className="px-5 py-2.5 rounded-full bg-gold text-black font-bold text-sm hover:bg-gold-light transition-colors disabled:opacity-60 cursor-pointer"
+          >
+            {savingForm ? 'SALVANDO...' : 'ADICIONAR AO CARDÁPIO'}
+          </button>
+        </form>
+      )}
 
       {loading && <p className="text-gray">Carregando...</p>}
       {error && <p className="text-red">{error}</p>}
@@ -88,7 +223,35 @@ export default function AdminProducts({ token }) {
                   </div>
 
                   <p className="font-bold text-cream text-sm">{p.name}</p>
-                  <p className="text-gray text-xs mb-3 line-clamp-2">{p.description}</p>
+                  <p className="text-gray text-xs mb-2 line-clamp-2">{p.description}</p>
+
+                  {/* Preço editável */}
+                  {editingPriceId === p.id ? (
+                    <div className="flex items-center gap-1.5 mb-3">
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        autoFocus
+                        value={priceDraft}
+                        onChange={(e) => setPriceDraft(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && savePrice(p.id)}
+                        className="w-24 px-2 py-1 rounded-lg border border-gold/30 bg-black/50 text-cream text-sm outline-none focus:border-gold"
+                      />
+                      <button onClick={() => savePrice(p.id)} className="text-green-400 hover:text-green-300 cursor-pointer" aria-label="Salvar preço">
+                        <Check size={16} />
+                      </button>
+                      <button onClick={() => setEditingPriceId(null)} className="text-gray hover:text-cream cursor-pointer" aria-label="Cancelar">
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => startEditPrice(p)}
+                      className="flex items-center gap-1.5 text-gold font-bold text-sm mb-3 hover:text-gold-light cursor-pointer"
+                    >
+                      {fmt(p.price)} <Pencil size={12} />
+                    </button>
+                  )}
 
                   <input
                     ref={(el) => (fileInputs.current[p.id] = el)}
@@ -103,18 +266,26 @@ export default function AdminProducts({ token }) {
                       disabled={busyId === p.id}
                       className="flex-1 flex items-center justify-center gap-1.5 text-xs px-3 py-2 rounded-full bg-gold text-black font-semibold hover:bg-gold-light transition-colors disabled:opacity-60 cursor-pointer"
                     >
-                      <ImagePlus size={14} /> {p.image ? 'Trocar imagem' : 'Adicionar imagem'}
+                      <ImagePlus size={14} /> {p.image ? 'Trocar' : 'Imagem'}
                     </button>
                     {p.image && (
                       <button
-                        onClick={() => handleRemove(p.id)}
+                        onClick={() => handleRemoveImage(p.id)}
                         disabled={busyId === p.id}
-                        className="flex items-center justify-center text-xs px-3 py-2 rounded-full border border-red/30 text-red hover:bg-red/10 cursor-pointer disabled:opacity-60"
+                        className="flex items-center justify-center text-xs px-2.5 py-2 rounded-full border border-gold/20 text-gray hover:text-cream hover:border-gold/40 cursor-pointer disabled:opacity-60"
                         aria-label="Remover imagem"
                       >
                         <X size={14} />
                       </button>
                     )}
+                    <button
+                      onClick={() => handleDeleteProduct(p.id, p.name)}
+                      disabled={busyId === p.id}
+                      className="flex items-center justify-center text-xs px-2.5 py-2 rounded-full border border-red/30 text-red hover:bg-red/10 cursor-pointer disabled:opacity-60"
+                      aria-label="Remover item do cardápio"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 </div>
               ))}

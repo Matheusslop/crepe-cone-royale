@@ -50,6 +50,44 @@ export async function fetchProducts() {
   return res.json()
 }
 
+export async function createProduct(token, product) {
+  const res = await fetch(`${API_BASE}/admin/products`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(product),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.error || 'Não foi possível criar o item.')
+  }
+  return res.json()
+}
+
+export async function updateProduct(token, id, updates) {
+  const res = await fetch(`${API_BASE}/admin/products/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(updates),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.error || 'Não foi possível atualizar o item.')
+  }
+  return res.json()
+}
+
+export async function deleteProduct(token, id) {
+  const res = await fetch(`${API_BASE}/admin/products/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.error || 'Não foi possível remover o item.')
+  }
+  return res.json()
+}
+
 export async function uploadProductImage(token, id, imageDataUrl) {
   const res = await fetch(`${API_BASE}/admin/products/${id}/image`, {
     method: 'PATCH',

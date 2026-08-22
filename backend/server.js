@@ -11,6 +11,15 @@ app.use(express.json({ limit: '8mb' })) // limite maior para acomodar imagens em
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret'
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin'
+const ALLOWED_CATEGORIES = ['tradicionais', 'especiais', 'premium', 'doces']
+
+function slugify(str) {
+  return String(str)
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+}
 
 function authMiddleware(req, res, next) {
   const header = req.headers.authorization || ''
@@ -79,6 +88,79 @@ app.get('/api/products', async (req, res) => {
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: 'Erro ao buscar o cardápio.' })
+  }
+})
+
+// --- Create menu item (admin only) ---
+app.post('/api/admin/products', authMiddleware, async (req, res) => {
+  const { name, category, description, price } = req.body
+  if (!name || !String(name).trim()) return res.status(400).json({ error: 'Nome é obrigatório.' })
+  if (!ALLOWED_CATEGORIES.includes(category)) return res.status(400).json({ error: 'Categoria inválida.' })
+  const priceNum = Number(price)
+  if (!Number.isFinite(priceNum) || priceNum <= 0) return res.status(400).json({ error: 'Preço inválido.' })
+  try {
+    let baseId = slugify(name) || 'item'
+    let id = baseId
+    let n = 2
+    while ((await sql`SELECT 1 FROM products WHERE id = ${id}`).length > 0) {
+      id = `${baseId}-${n}`
+      n++
+    }
+    const posRows = await sql`SELECT COALESCE(MAX("position"), -1) + 1 AS next FROM products`
+    await sql`
+      INSERT INTO products (id, category, name, description, price, "position")
+      VALUES (${id}, ${category}, ${String(name).trim()}, ${description ? String(description).trim() : null}, ${priceNum}, ${posRows[0].next})
+    `
+    res.status(201).json({ id })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Erro ao criar o item.' })
+  }
+})
+
+// --- Update menu item — nome, categoria, descrição e/ou preço (admin only) ---
+app.patch('/api/admin/products/:id', authMiddleware, async (req, res) => {
+  const { name, description, price, category } = req.body
+  try {
+    const rows = await sql`SELECT * FROM products WHERE id = ${req.params.id}`
+    if (rows.length === 0) return res.status(404).json({ error: 'Item não encontrado.' })
+    const current = rows[0]
+
+    const newName = name !== undefined ? String(name).trim() : current.name
+    if (!newName) return res.status(400).json({ error: 'Nome é obrigatório.' })
+
+    const newCategory = category !== undefined ? category : current.category
+    if (!ALLOWED_CATEGORIES.includes(newCategory)) return res.status(400).json({ error: 'Categoria inválida.' })
+
+    const newDescription = description !== undefined ? String(description).trim() : current.description
+
+    let newPrice = current.price
+    if (price !== undefined) {
+      const priceNum = Number(price)
+      if (!Number.isFinite(priceNum) || priceNum <= 0) return res.status(400).json({ error: 'Preço inválido.' })
+      newPrice = priceNum
+    }
+
+    await sql`
+      UPDATE products SET name = ${newName}, description = ${newDescription}, category = ${newCategory}, price = ${newPrice}
+      WHERE id = ${req.params.id}
+    `
+    res.json({ ok: true })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Erro ao atualizar o item.' })
+  }
+})
+
+// --- Delete menu item (admin only) ---
+app.delete('/api/admin/products/:id', authMiddleware, async (req, res) => {
+  try {
+    const rows = await sql`DELETE FROM products WHERE id = ${req.params.id} RETURNING id`
+    if (rows.length === 0) return res.status(404).json({ error: 'Item não encontrado.' })
+    res.json({ ok: true })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Erro ao remover o item.' })
   }
 })
 

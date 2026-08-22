@@ -2,30 +2,36 @@ import { createContext, useContext, useMemo, useState, useCallback } from 'react
 
 const CartContext = createContext(null)
 
-export function CartProvider({ children }) {
-  const [items, setItems] = useState([]) // { id, name, price, qty, notes }
+function buildLineId(id, notes, extras) {
+  const extrasKey = extras.map((e) => e.id).sort().join(',')
+  return `${id}|${notes}|${extrasKey}`
+}
 
-  const addItem = useCallback((product, qty = 1, notes = '') => {
+export function CartProvider({ children }) {
+  const [items, setItems] = useState([]) // { lineId, id, name, price, basePrice, extras, qty, notes }
+
+  const addItem = useCallback((product, qty = 1, notes = '', extras = []) => {
+    const extrasTotal = extras.reduce((sum, e) => sum + e.price, 0)
+    const price = product.price + extrasTotal
+    const lineId = buildLineId(product.id, notes, extras)
     setItems((prev) => {
-      const existing = prev.find((i) => i.id === product.id && i.notes === notes)
+      const existing = prev.find((i) => i.lineId === lineId)
       if (existing) {
-        return prev.map((i) =>
-          i === existing ? { ...i, qty: i.qty + qty } : i
-        )
+        return prev.map((i) => (i.lineId === lineId ? { ...i, qty: i.qty + qty } : i))
       }
-      return [...prev, { id: product.id, name: product.name, price: product.price, qty, notes }]
+      return [...prev, { lineId, id: product.id, name: product.name, price, basePrice: product.price, extras, qty, notes }]
     })
   }, [])
 
-  const removeItem = useCallback((id, notes) => {
-    setItems((prev) => prev.filter((i) => !(i.id === id && i.notes === notes)))
+  const removeItem = useCallback((lineId) => {
+    setItems((prev) => prev.filter((i) => i.lineId !== lineId))
   }, [])
 
-  const updateQty = useCallback((id, notes, qty) => {
+  const updateQty = useCallback((lineId, qty) => {
     setItems((prev) =>
       qty <= 0
-        ? prev.filter((i) => !(i.id === id && i.notes === notes))
-        : prev.map((i) => (i.id === id && i.notes === notes ? { ...i, qty } : i))
+        ? prev.filter((i) => i.lineId !== lineId)
+        : prev.map((i) => (i.lineId === lineId ? { ...i, qty } : i))
     )
   }, [])
 
