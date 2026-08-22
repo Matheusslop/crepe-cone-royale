@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Check } from 'lucide-react'
+import { Plus, Check, X } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { EXTRAS, EXTRA_PRICE } from '../data/menu'
 
@@ -17,6 +17,7 @@ export default function ProductCard({ product }) {
   const [added, setAdded] = useState(false)
   const [customizing, setCustomizing] = useState(false)
   const [selected, setSelected] = useState([])
+  const [showImage, setShowImage] = useState(false)
   const badge = CATEGORY_BADGE[product.category] || {}
   const extrasList = EXTRAS[product.category === 'doces' ? 'doce' : 'salgado']
   const extrasTotal = selected.reduce((sum, e) => sum + e.price, 0)
@@ -38,12 +39,19 @@ export default function ProductCard({ product }) {
   return (
     <div className="group bg-charcoal border border-gold/10 rounded-2xl overflow-hidden flex flex-col justify-between hover:border-gold/40 hover:shadow-[0_0_20px_rgba(245,197,24,0.08)] transition-all">
       {product.image ? (
-        <img
-          src={product.image}
-          alt={product.name}
-          className="w-full h-40 object-cover"
-          loading="lazy"
-        />
+        <button
+          type="button"
+          onClick={() => setShowImage(true)}
+          className="w-full h-40 cursor-zoom-in block"
+          aria-label={`Ver foto de ${product.name} em tamanho completo`}
+        >
+          <img
+            src={product.image}
+            alt={product.name}
+            className="w-full h-40 object-cover"
+            loading="lazy"
+          />
+        </button>
       ) : (
         <div className="w-full h-40 flex items-center justify-center bg-gradient-to-br from-charcoal to-black/60 text-3xl">
           🥐
@@ -106,6 +114,28 @@ export default function ProductCard({ product }) {
           )}
         </div>
       </div>
+
+      {showImage && product.image && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 cursor-zoom-out"
+          onClick={() => setShowImage(false)}
+        >
+          <button
+            type="button"
+            onClick={() => setShowImage(false)}
+            aria-label="Fechar"
+            className="absolute top-4 right-4 text-cream/80 hover:text-gold bg-black/50 rounded-full p-2 cursor-pointer"
+          >
+            <X size={22} />
+          </button>
+          <img
+            src={product.image}
+            alt={product.name}
+            className="max-w-full max-h-full object-contain rounded-xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   )
 }
