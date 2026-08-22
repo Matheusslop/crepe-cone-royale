@@ -22,8 +22,9 @@ export default function AdminProducts({ token }) {
   const [busyId, setBusyId] = useState(null)
   const fileInputs = useRef({})
 
-  const [editingPriceId, setEditingPriceId] = useState(null)
-  const [priceDraft, setPriceDraft] = useState('')
+  const [editingId, setEditingId] = useState(null)
+  const [editDraft, setEditDraft] = useState(emptyForm)
+  const [editError, setEditError] = useState('')
 
   const [creating, setCreating] = useState(false)
   const [form, setForm] = useState(emptyForm)
@@ -69,22 +70,47 @@ export default function AdminProducts({ token }) {
     }
   }
 
-  // --- Editar preço ---
-  function startEditPrice(p) {
-    setEditingPriceId(p.id)
-    setPriceDraft(String(p.price))
+  // --- Editar item (nome, categoria, descrição e preço) ---
+  function startEdit(p) {
+    setEditingId(p.id)
+    setEditError('')
+    setEditDraft({
+      name: p.name || '',
+      category: p.category,
+      description: p.description || '',
+      price: String(p.price),
+    })
   }
 
-  async function savePrice(id) {
-    const priceNum = Number(String(priceDraft).replace(',', '.'))
-    if (!Number.isFinite(priceNum) || priceNum <= 0) { alert('Informe um preço válido.'); return }
+  function cancelEdit() {
+    setEditingId(null)
+    setEditError('')
+  }
+
+  async function saveEdit(id) {
+    setEditError('')
+    const priceNum = Number(String(editDraft.price).replace(',', '.'))
+    if (!editDraft.name.trim()) { setEditError('Informe o nome do item.'); return }
+    if (!Number.isFinite(priceNum) || priceNum <= 0) { setEditError('Informe um preço válido.'); return }
+
     setBusyId(id)
     try {
-      await updateProduct(token, id, { price: priceNum })
-      setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, price: priceNum } : p)))
-      setEditingPriceId(null)
+      await updateProduct(token, id, {
+        name: editDraft.name.trim(),
+        category: editDraft.category,
+        description: editDraft.description.trim(),
+        price: priceNum,
+      })
+      setProducts((prev) => prev.map((p) => (p.id === id ? {
+        ...p,
+        name: editDraft.name.trim(),
+        category: editDraft.category,
+        description: editDraft.description.trim(),
+        price: priceNum,
+      } : p)))
+      setEditingId(null)
     } catch (err) {
-      alert(err.message)
+      setEditError(err.message)
     } finally {
       setBusyId(null)
     }
@@ -141,7 +167,7 @@ export default function AdminProducts({ token }) {
       <div className="mb-6 flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="font-display text-4xl text-gold tracking-wide">CARDÁPIO</h1>
-          <p className="text-gray text-sm">Adicione itens, altere preços e troque as fotos.</p>
+          <p className="text-gray text-sm">Adicione itens e edite nome, categoria, descrição, preço e foto.</p>
         </div>
         <button
           onClick={() => { setCreating((v) => !v); setFormError('') }}
@@ -222,34 +248,69 @@ export default function AdminProducts({ token }) {
                     )}
                   </div>
 
-                  <p className="font-bold text-cream text-sm">{p.name}</p>
-                  <p className="text-gray text-xs mb-2 line-clamp-2">{p.description}</p>
-
-                  {/* Preço editável */}
-                  {editingPriceId === p.id ? (
-                    <div className="flex items-center gap-1.5 mb-3">
+                  {/* Item editável: nome, categoria, descrição e preço */}
+                  {editingId === p.id ? (
+                    <div className="space-y-2 mb-3">
+                      <input
+                        type="text"
+                        autoFocus
+                        placeholder="Nome do item"
+                        value={editDraft.name}
+                        onChange={(e) => setEditDraft((f) => ({ ...f, name: e.target.value }))}
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-gold/30 bg-black/50 text-cream text-sm font-bold outline-none focus:border-gold"
+                      />
+                      <select
+                        value={editDraft.category}
+                        onChange={(e) => setEditDraft((f) => ({ ...f, category: e.target.value }))}
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-gold/30 bg-black/50 text-cream text-xs outline-none focus:border-gold"
+                      >
+                        {CATEGORIES.map((c) => (
+                          <option key={c.id} value={c.id}>{c.label}</option>
+                        ))}
+                      </select>
+                      <textarea
+                        placeholder="Descrição (opcional)"
+                        value={editDraft.description}
+                        onChange={(e) => setEditDraft((f) => ({ ...f, description: e.target.value }))}
+                        rows={2}
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-gold/30 bg-black/50 text-cream text-xs outline-none focus:border-gold resize-none"
+                      />
                       <input
                         type="text"
                         inputMode="decimal"
-                        autoFocus
-                        value={priceDraft}
-                        onChange={(e) => setPriceDraft(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && savePrice(p.id)}
-                        className="w-24 px-2 py-1 rounded-lg border border-gold/30 bg-black/50 text-cream text-sm outline-none focus:border-gold"
+                        placeholder="Preço"
+                        value={editDraft.price}
+                        onChange={(e) => setEditDraft((f) => ({ ...f, price: e.target.value }))}
+                        onKeyDown={(e) => e.key === 'Enter' && saveEdit(p.id)}
+                        className="w-24 px-2.5 py-1.5 rounded-lg border border-gold/30 bg-black/50 text-cream text-sm outline-none focus:border-gold"
                       />
-                      <button onClick={() => savePrice(p.id)} className="text-green-400 hover:text-green-300 cursor-pointer" aria-label="Salvar preço">
-                        <Check size={16} />
-                      </button>
-                      <button onClick={() => setEditingPriceId(null)} className="text-gray hover:text-cream cursor-pointer" aria-label="Cancelar">
-                        <X size={16} />
-                      </button>
+                      {editError && <p className="text-red text-xs">{editError}</p>}
+                      <div className="flex items-center gap-2 pt-0.5">
+                        <button
+                          onClick={() => saveEdit(p.id)}
+                          disabled={busyId === p.id}
+                          className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-gold text-black font-semibold hover:bg-gold-light transition-colors disabled:opacity-60 cursor-pointer"
+                        >
+                          <Check size={13} /> Salvar
+                        </button>
+                        <button
+                          onClick={cancelEdit}
+                          className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full border border-gold/20 text-gray hover:text-cream cursor-pointer"
+                        >
+                          <X size={13} /> Cancelar
+                        </button>
+                      </div>
                     </div>
                   ) : (
                     <button
-                      onClick={() => startEditPrice(p)}
-                      className="flex items-center gap-1.5 text-gold font-bold text-sm mb-3 hover:text-gold-light cursor-pointer"
+                      onClick={() => startEdit(p)}
+                      className="w-full text-left mb-3 group cursor-pointer"
                     >
-                      {fmt(p.price)} <Pencil size={12} />
+                      <p className="font-bold text-cream text-sm flex items-center gap-1.5">
+                        {p.name} <Pencil size={11} className="opacity-0 group-hover:opacity-100 text-gold transition-opacity" />
+                      </p>
+                      <p className="text-gray text-xs mb-1.5 line-clamp-2">{p.description || 'Sem descrição'}</p>
+                      <p className="text-gold font-bold text-sm">{fmt(p.price)}</p>
                     </button>
                   )}
 
