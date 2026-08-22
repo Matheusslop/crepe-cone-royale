@@ -34,8 +34,17 @@ npm install
 npm run dev
 ```
 
-Abre em `http://localhost:5173`. Painel admin em `/admin`.
-**Senha padrão de dev:** defina em `ADMIN_PASSWORD` no `.env`.
+Abre em `http://localhost:5173`. Painel admin em `/admin` (também acessível pelo
+ícone de cadeado no topo do site) ou diretamente pelas abas **Pedidos**,
+**Cardápio** e **Senha**.
+**Senha padrão de dev:** defina em `ADMIN_PASSWORD` no `.env`. Ao trocar a senha
+pela aba "Senha" do painel, ela passa a ser salva (com hash) no banco e tem
+prioridade sobre `ADMIN_PASSWORD`.
+
+### Imagens do cardápio
+Na aba **Cardápio** do painel admin é possível enviar/trocar a foto de cada
+item — o navegador redimensiona e comprime a imagem antes do envio, então
+qualquer foto de celular funciona sem preparo prévio.
 
 ## Deploy no Render
 

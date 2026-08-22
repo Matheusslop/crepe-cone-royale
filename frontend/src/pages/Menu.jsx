@@ -1,12 +1,21 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { CATEGORIES, MENU } from '../data/menu'
+import { fetchProducts } from '../lib/api'
 import ProductCard from '../components/ProductCard'
 import cardapio from '../assets/cardapio-cone-royale.jpg'
 
 export default function Menu() {
   const [active, setActive] = useState('tradicionais')
-  const filtered = MENU.filter((p) => p.category === active)
+  const [products, setProducts] = useState(MENU)
   const [menuOpen, setMenuOpen] = useState(false)
+
+  useEffect(() => {
+    fetchProducts()
+      .then((data) => setProducts(data.map((p) => ({ ...p, price: Number(p.price) }))))
+      .catch(() => {}) // mantém o cardápio estático como fallback se a API falhar
+  }, [])
+
+  const filtered = products.filter((p) => p.category === active)
 
   return (
     <main>

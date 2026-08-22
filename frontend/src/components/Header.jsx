@@ -1,6 +1,6 @@
 import logo from '../assets/logo-cone-royale.jpg'
 import { Link } from 'react-router-dom'
-import { ShoppingBag, Search } from 'lucide-react'
+import { ShoppingBag, Search, Lock } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 
 export default function Header({ onOpenCart }) {
@@ -29,6 +29,16 @@ export default function Header({ onOpenCart }) {
 
         {/* Nav + actions */}
         <div className="flex items-center gap-2">
+          {/* Área do administrador */}
+          <Link
+            to="/admin"
+            aria-label="Área do administrador"
+            title="Área do administrador"
+            className="flex items-center justify-center w-8 h-8 rounded-full border border-gold/15 text-gray hover:text-gold hover:border-gold/40 transition-colors"
+          >
+            <Lock size={14} />
+          </Link>
+
           {/* Acompanhar link */}
           <Link
             to="/acompanhar"

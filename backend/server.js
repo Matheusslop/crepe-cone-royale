@@ -2,11 +2,12 @@ require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const jwt = require('jsonwebtoken')
+const bcrypt = require('bcryptjs')
 const { sql, initDb } = require('./db')
 
 const app = express()
 app.use(cors())
-app.use(express.json())
+app.use(express.json({ limit: '8mb' })) // limite maior para acomodar imagens em base64
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret'
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin'
@@ -23,12 +24,91 @@ function authMiddleware(req, res, next) {
   }
 }
 
+// A senha do admin pode ter sido alterada e fica salva (com hash) na tabela
+// admin_settings. Enquanto ninguém trocar a senha, usamos o valor de ADMIN_PASSWORD.
+async function getAdminPasswordHash() {
+  const rows = await sql`SELECT value FROM admin_settings WHERE key = 'password_hash'`
+  return rows.length > 0 ? rows[0].value : null
+}
+
+async function checkAdminPassword(password) {
+  const hash = await getAdminPasswordHash()
+  if (hash) return bcrypt.compare(password || '', hash)
+  return password === ADMIN_PASSWORD
+}
+
 // --- Admin auth ---
-app.post('/api/admin/login', (req, res) => {
+app.post('/api/admin/login', async (req, res) => {
   const { password } = req.body
-  if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: 'Senha incorreta.' })
-  const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '12h' })
-  res.json({ token })
+  try {
+    const valid = await checkAdminPassword(password)
+    if (!valid) return res.status(401).json({ error: 'Senha incorreta.' })
+    const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '12h' })
+    res.json({ token })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Erro ao autenticar.' })
+  }
+})
+
+// --- Change admin password (admin only) ---
+app.patch('/api/admin/password', authMiddleware, async (req, res) => {
+  const { currentPassword, newPassword } = req.body
+  if (!newPassword || String(newPassword).length < 4)
+    return res.status(400).json({ error: 'A nova senha deve ter ao menos 4 caracteres.' })
+  try {
+    const valid = await checkAdminPassword(currentPassword)
+    if (!valid) return res.status(401).json({ error: 'Senha atual incorreta.' })
+    const newHash = await bcrypt.hash(String(newPassword), 10)
+    await sql`
+      INSERT INTO admin_settings (key, value) VALUES ('password_hash', ${newHash})
+      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+    `
+    res.json({ ok: true })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Erro ao alterar a senha.' })
+  }
+})
+
+// --- Menu / products (public read) ---
+app.get('/api/products', async (req, res) => {
+  try {
+    const rows = await sql`SELECT id, category, name, description, price, image FROM products ORDER BY "position" ASC`
+    res.json(rows)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Erro ao buscar o cardápio.' })
+  }
+})
+
+// --- Update item image (admin only) — recebe uma data URL (base64) já comprimida pelo front-end ---
+app.patch('/api/admin/products/:id/image', authMiddleware, async (req, res) => {
+  const { image } = req.body
+  if (!image || typeof image !== 'string' || !image.startsWith('data:image/'))
+    return res.status(400).json({ error: 'Imagem inválida.' })
+  if (image.length > 6 * 1024 * 1024)
+    return res.status(400).json({ error: 'Imagem muito grande. Use um arquivo menor.' })
+  try {
+    const rows = await sql`UPDATE products SET image = ${image} WHERE id = ${req.params.id} RETURNING id`
+    if (rows.length === 0) return res.status(404).json({ error: 'Item não encontrado.' })
+    res.json({ ok: true })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Erro ao salvar a imagem.' })
+  }
+})
+
+// --- Remove item image (admin only) ---
+app.delete('/api/admin/products/:id/image', authMiddleware, async (req, res) => {
+  try {
+    const rows = await sql`UPDATE products SET image = NULL WHERE id = ${req.params.id} RETURNING id`
+    if (rows.length === 0) return res.status(404).json({ error: 'Item não encontrado.' })
+    res.json({ ok: true })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Erro ao remover a imagem.' })
+  }
 })
 
 // --- Create order (public) ---
@@ -86,6 +166,18 @@ app.patch('/api/orders/:id', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: 'Erro ao atualizar pedido.' })
+  }
+})
+
+// --- Delete order (admin only) ---
+app.delete('/api/orders/:id', authMiddleware, async (req, res) => {
+  try {
+    const rows = await sql`DELETE FROM orders WHERE id = ${req.params.id} RETURNING id`
+    if (rows.length === 0) return res.status(404).json({ error: 'Pedido não encontrado.' })
+    res.json({ ok: true })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Erro ao apagar o pedido.' })
   }
 })
 

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { CartProvider } from './context/CartContext'
 import Header from './components/Header'
 import CartDrawer from './components/CartDrawer'
@@ -8,7 +8,10 @@ import Checkout from './pages/Checkout'
 import OrderConfirmation from './pages/OrderConfirmation'
 import TrackOrder from './pages/TrackOrder'
 import AdminLogin from './pages/AdminLogin'
-import AdminDashboard from './pages/AdminDashboard'
+import AdminLayout from './pages/admin/AdminLayout'
+import AdminOrders from './pages/admin/AdminOrders'
+import AdminProducts from './pages/admin/AdminProducts'
+import AdminPassword from './pages/admin/AdminPassword'
 
 export default function App() {
   const [cartOpen, setCartOpen] = useState(false)
@@ -21,7 +24,23 @@ export default function App() {
     <CartProvider>
       <Routes>
         <Route path="/admin" element={<AdminLogin onLogin={handleLogin} />} />
-        <Route path="/admin/pedidos" element={<AdminDashboard token={token} onLogout={handleLogout} />} />
+        <Route
+          path="/admin/*"
+          element={
+            token ? (
+              <AdminLayout onLogout={handleLogout}>
+                <Routes>
+                  <Route path="pedidos" element={<AdminOrders token={token} onLogout={handleLogout} />} />
+                  <Route path="cardapio" element={<AdminProducts token={token} />} />
+                  <Route path="senha" element={<AdminPassword token={token} />} />
+                  <Route path="*" element={<Navigate to="/admin/pedidos" replace />} />
+                </Routes>
+              </AdminLayout>
+            ) : (
+              <Navigate to="/admin" replace />
+            )
+          }
+        />
         <Route
           path="*"
           element={
