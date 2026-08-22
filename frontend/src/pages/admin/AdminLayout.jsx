@@ -1,5 +1,5 @@
-import { NavLink, useNavigate } from 'react-router-dom'
-import { LogOut } from 'lucide-react'
+import { NavLink, Link, useNavigate } from 'react-router-dom'
+import { LogOut, ArrowLeft } from 'lucide-react'
 
 const TABS = [
   { to: '/admin/pedidos', label: 'Pedidos' },
@@ -34,12 +34,20 @@ export default function AdminLayout({ onLogout, children }) {
               </NavLink>
             ))}
           </div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-1.5 text-sm text-gray hover:text-cream cursor-pointer flex-shrink-0"
-          >
-            <LogOut size={15} /> Sair
-          </button>
+          <div className="flex items-center gap-4 flex-shrink-0">
+            <Link
+              to="/"
+              className="flex items-center gap-1.5 text-sm text-gray hover:text-cream transition-colors"
+            >
+              <ArrowLeft size={15} /> <span className="hidden sm:inline">Voltar ao site</span>
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1.5 text-sm text-gray hover:text-cream cursor-pointer"
+            >
+              <LogOut size={15} /> Sair
+            </button>
+          </div>
         </div>
       </div>
       {children}
